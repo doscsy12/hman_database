@@ -11,12 +11,14 @@ DROP TABLE IF EXISTS TargetFeedbackData,
                      TaskModel,
                      GameData,
                      GameSession,
+                     UserExtended,
+                     OrgDevice,
                      GlacierArchivesLog;
                      
 CREATE TABLE TargetFeedbackData (
     ID INT AUTO_INCREMENT NOT NULL,
     AffectedSide VARCHAR(10),
-    PatientID VARCHAR(10),
+    PatientID VARCHAR(20),
     TargetIndex INT,
     Sparc FLOAT,
     VisualTargetXCoord FLOAT,
@@ -58,12 +60,14 @@ CREATE TABLE TargetFeedbackData (
     IsSynced INT,
     PRIMARY KEY (ID),
     FOREIGN KEY (GameID)
-        REFERENCES GameData (GameID)
+        REFERENCES GameData (GameID),
+	FOREIGN KEY (SessionID)
+        REFERENCES GameSession (SessionID)
 );
 
 CREATE TABLE TaskModel (
     ID INTEGER AUTO_INCREMENT NOT NULL,
-    PatientID VARCHAR(10),
+    PatientID VARCHAR(20),
     VisualTargetXCoord FLOAT,
     VisualTargetYCoord FLOAT,
     TargetXCoord FLOAT,
@@ -89,51 +93,105 @@ CREATE TABLE TaskModel (
     IsSynced INT,
     PRIMARY KEY (ID),
     FOREIGN KEY (GameID)
-        REFERENCES GameData (GameID)
+        REFERENCES GameData (GameID),
+	FOREIGN KEY (SessionID)
+        REFERENCES GameSession (SessionID)
 );
 
 CREATE TABLE GameData (
-    ID INT AUTO_INCREMENT NOT NULL,
-    GameID VARCHAR(20),
+    GameID INT AUTO_INCREMENT NOT NULL,
     UserExtendedID INTEGER,
     Score INT,
     Duration FLOAT,
-    PRIMARY KEY (ID)
+    PRIMARY KEY (GameID),
+    FOREIGN KEY (GameID)
+        REFERENCES GameSession (GameID),
+	FOREIGN KEY (GameID)
+        REFERENCES TargetFeedbackData (GameID),
+	FOREIGN KEY (GameID)
+        REFERENCES TargetFeedbackData (GameID)
 );
 
 CREATE TABLE GameSession (
-    ID INT AUTO_INCREMENT NOT NULL,
+    SessionID INT AUTO_INCREMENT NOT NULL,
     PatientID VARCHAR(20),
     AffectedSide VARCHAR(20),
     Score FLOAT,
     Strength FLOAT,
     Coordination FLOAT,
     Agility FLOAT,
+    GameID VARCHAR(20),
     SessionTime FLOAT,
-    SessionID VARCHAR(20),
     NumberOfTargets INT,
     CreatedDate DATETIME,
     GripForceMax VARCHAR(20),
     GripForceMin VARCHAR(20),
     GripForceVariability VARCHAR(20),
     IsSynced INT,
-    PRIMARY KEY (ID),
+    PRIMARY KEY (SessionID),
     FOREIGN KEY (SessionID)
         REFERENCES TaskModel (SessionID),
     FOREIGN KEY (SessionID)
-        REFERENCES TargetFeedbackData (SessionID)
+        REFERENCES TargetFeedbackData (SessionID),
+	FOREIGN KEY (SessionID)
+        REFERENCES GlacierArchivesLog (SessionID)
 );
 
 CREATE TABLE GlacierArchivesLog (
-    ArchiveID VARCHAR(20),
+    ArchiveID INT NOT NULL,
     PatientID VARCHAR(20),
     SessionID VARCHAR(20),
     ModelType VARCHAR(20),
     FileName VARCHAR(20),
     UploadDateTime DATETIME,
-    PRIMARY KEY (ArchiveID),
-    FOREIGN KEY (PatientID)
+    PRIMARY KEY (ArchiveID)
+);
+
+CREATE TABLE OrgDevice (
+    DeviceID INT NOT NULL,
+    OrgID INT,
+    CreatedDate DATETIME,
+    ModifiedDate DATETIME,
+    LastModifiedBy INT,
+    PRIMARY KEY (DeviceID),
+    FOREIGN KEY (DeviceID)
+        REFERENCES TargetFeedbackData (DeviceID),
+    FOREIGN KEY (DeviceID)
+        REFERENCES TaskModel (DeviceID)
+);
+
+CREATE TABLE UserExtended (
+    PatientID VARCHAR(20),
+    Age INT,
+    Gender ENUM('M', 'F', 'O'),
+    AffectedSide VARCHAR(20),
+    DominantSide VARCHAR(20),
+    AssignedTherapist INT,
+    Height FLOAT,
+    Weight FLOAT,
+    ArmLength FLOAT,
+    Notes VARCHAR(50),
+    ClinicalScale INT,
+    TrainingStartDate DATETIME,
+    ConventionalTrainingStartDate DATETIME,
+    ScaleType VARCHAR(20),
+    Language VARCHAR(20),
+    DateOfInjury VARCHAR(20),
+    TypeOfInjury VARCHAR(20),
+    LocationOfInjury VARCHAR(20),
+    HasNoInjury VARCHAR(20),
+    UserMasterID INT,
+    DeviceID INT,
+    CreatedDate DATETIME,
+    ModifiedDate DATETIME,
+    LastModifiedBy INT,
+    PRIMARY KEY (PatientID),
+	FOREIGN KEY (PatientID)
         REFERENCES TargetFeedbackData (PatientID),
-    FOREIGN KEY (SessionID)
-        REFERENCES TargetFeedbackData (SessionID)
+	FOREIGN KEY (PatientID)
+        REFERENCES TaskModel (PatientID),
+    FOREIGN KEY (PatientID)
+        REFERENCES GlacierArchivesLog (PatientID),
+	FOREIGN KEY (PatientID)
+        REFERENCES GameSession (PatientID)
 );
